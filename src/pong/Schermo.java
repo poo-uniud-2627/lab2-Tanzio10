@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+import nebbia.Nebbia;
 import ostacoli.MotoreDeiLivelli;
 import ostacoli.Ostacolo;
 
@@ -23,6 +24,9 @@ import ostacoli.Ostacolo;
  * Non prende nessuna decisione di gioco (quelle sono della Partita e del motore dei livelli).
  */
 class Schermo extends JPanel {
+    /** Il grigio della nebbia: abbastanza chiaro da vedersi sul nero, abbastanza scuro da far risaltare il bianco. */
+    private static final Color NEBBIA = new Color(110, 110, 110);
+
     private final Partita partita;
     private final Tastiera tastiera;
 
@@ -85,6 +89,13 @@ class Schermo extends JPanel {
         g2.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{10, 10}, 0));
         g2.drawLine(larghezza / 2, 0, larghezza / 2, altezza);
 
+        // La nebbia si disegna prima degli ostacoli e delle racchette: così, nella nebbia, si vedono.
+        Nebbia nebbia = partita.getLivello().nebbia();
+        if (nebbia.isPresente()) {
+            g2.setColor(NEBBIA);
+            riempi(g2, nebbia.getZona());
+        }
+
         // Lo schermo non sa di che tipo è ogni ostacolo: chiede a ciascuno se è rotto e di che colore è.
         for (Ostacolo o : partita.getOstacoli().getOstacoli()) {
             if (!o.isRotto()) {
@@ -99,7 +110,10 @@ class Schermo extends JPanel {
         Palla palla = partita.getPalla();
         int r = palla.getRaggio();
         Posizione p = palla.getPosizione();
-        g2.fillOval((int) Math.round(p.x() - r), (int) Math.round(p.y() - r), 2 * r, 2 * r);
+        // La palla sparisce quando il suo centro è nella nebbia.
+        if (!nebbia.nasconde(p)) {
+            g2.fillOval((int) Math.round(p.x() - r), (int) Math.round(p.y() - r), 2 * r, 2 * r);
+        }
 
         g2.setFont(new Font(Font.MONOSPACED, Font.BOLD, 48));
         g2.drawString(String.valueOf(partita.getPunti(Lato.SINISTRA)), larghezza / 2 - 80, 60);

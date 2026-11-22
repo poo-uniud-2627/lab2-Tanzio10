@@ -4,10 +4,11 @@ package ostacoli;
 import geometria.Rettangolo;
 import java.util.ArrayList;
 import java.util.List;
+import nebbia.Nebbia;
 
 /**
  * Il motore dei livelli: dato il numero del livello, decide quanto va veloce la palla, quanto sbaglia
- * il giocatore automatico e quali ostacoli ci sono, e dove. È l'unico posto in cui si scrive
+ * il giocatore automatico, quali ostacoli ci sono (e dove) e se c'è la nebbia. È l'unico posto in cui si scrive
  * new OstacoloFisso, new OstacoloFragile...: tutte le altre classi conoscono solo Ostacolo.
  *
  * Gli ostacoli vanno sempre in coppia: uno e il suo gemello dall'altra parte del centro del campo
@@ -27,6 +28,11 @@ public class MotoreDeiLivelli {
     static final double ERRORE_AL_LIVELLO_1 = 90;
     static final double ERRORE_IN_MENO_A_OGNI_LIVELLO = 12;
 
+    /** La nebbia: nessuna ai livelli 1 e 2; dal 3 una striscia larga il 30% del campo, 5 punti percentuali in più a ogni livello. */
+    static final int PRIMO_LIVELLO_CON_NEBBIA = 3;
+    static final double NEBBIA_AL_PRIMO_LIVELLO = 0.30;
+    static final double NEBBIA_IN_PIU_A_OGNI_LIVELLO = 0.05;
+
     /**
      * Il livello numero, per un campo largo larghezzaCampo e alto altezzaCampo pixel
      * (gli ostacoli sono pensati per il campo del gioco, 800 x 500).
@@ -39,7 +45,15 @@ public class MotoreDeiLivelli {
         }
         double velocita = VELOCITA_AL_LIVELLO_1 + VELOCITA_IN_PIU_A_OGNI_LIVELLO * (numero - 1);
         double errore = Math.max(0, ERRORE_AL_LIVELLO_1 - ERRORE_IN_MENO_A_OGNI_LIVELLO * (numero - 1));
-        return new Livello(numero, velocita, errore, new Ostacoli(ostacoli(numero, larghezzaCampo / 2.0, altezzaCampo / 2.0)));
+        Ostacoli ostacoli = new Ostacoli(ostacoli(numero, larghezzaCampo / 2.0, altezzaCampo / 2.0));
+        return new Livello(numero, velocita, errore, ostacoli, nebbia(numero, larghezzaCampo, altezzaCampo));
+    }
+
+    /** La nebbia del livello numero: nessuna ai livelli 1 e 2; ai livelli 3, 4 e 5 il 30%, il 35% e il 40% del campo. */
+    private static Nebbia nebbia(int numero, int larghezzaCampo, int altezzaCampo) {
+        if (numero < PRIMO_LIVELLO_CON_NEBBIA) return Nebbia.nessuna();
+        double frazione = NEBBIA_AL_PRIMO_LIVELLO + NEBBIA_IN_PIU_A_OGNI_LIVELLO * (numero - PRIMO_LIVELLO_CON_NEBBIA);
+        return Nebbia.alCentro(larghezzaCampo, altezzaCampo, frazione);
     }
 
     /**
